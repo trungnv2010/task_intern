@@ -1,4 +1,4 @@
-# task_intern
+
 
 # week 1: 
 - tim hieu ve Factory Pattern, Singleton Pattern, Builder Pattern
