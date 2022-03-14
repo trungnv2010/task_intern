@@ -41,10 +41,10 @@ public final class App {
 //      java -jar task3.jar -a rsa -pub rsa.pub -v test.sig -i test.txt
     public static void main(String[] args) throws IOException, InvalidKeyException, GeneralSecurityException, URISyntaxException {
         
-        if (args[3].equalsIgnoreCase("-a")){
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance(args[4]);
-            if (args[5].equalsIgnoreCase("-p")){
-                keyGen.initialize(Integer.parseInt(args[6]));
+        if (args[0].equalsIgnoreCase("-a")){
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance(args[1]);
+            if (args[2].equalsIgnoreCase("-p")){
+                keyGen.initialize(Integer.parseInt(args[3]));
                 KeyPair keyPair = keyGen.generateKeyPair();
                 PublicKey publicKey = keyPair.getPublic();
                 PrivateKey privateKey = keyPair.getPrivate();
@@ -60,14 +60,14 @@ public final class App {
                 // for (int i = 0; i < privateKey.length; ++i) {
                 //     priString.append(Integer.toHexString(0x0100 + (privateKey[i] & 0x00FF)).substring(1));
                 // }
-                if (args[7].equalsIgnoreCase("-priv")){
-                    FileWriter writer = new FileWriter(args[8]);
+                if (args[4].equalsIgnoreCase("-priv")){
+                    FileWriter writer = new FileWriter(args[5]);
                     writer.write(priKeyString);
                     writer.close();
                 }
                 else System.out.println("Error 4");
-                if (args[9].equalsIgnoreCase("-pub")){
-                    FileWriter writer = new FileWriter(args[10]);
+                if (args[6].equalsIgnoreCase("-pub")){
+                    FileWriter writer = new FileWriter(args[7]);
                     writer.write(pubKeyString);
                     writer.close();
                 }
@@ -78,13 +78,13 @@ public final class App {
                 // writer.write(pubString.toString());
                 // writer.close();
             }
-            else if (args[5].equalsIgnoreCase("-priv")){
-                if (args[7].equalsIgnoreCase("-s")){
-                    if (args[9].equalsIgnoreCase("-o")){
+            else if (args[2].equalsIgnoreCase("-priv")){
+                if (args[4].equalsIgnoreCase("-s")){
+                    if (args[6].equalsIgnoreCase("-o")){
                         String privKeyString = new String();
                         String mes = new String();
                         try {
-                            File myObj = new File(args[6]);
+                            File myObj = new File(args[3]);
                             Scanner myReader = new Scanner(myObj);
                             while (myReader.hasNextLine()) {
                             privKeyString = myReader.nextLine();
@@ -95,7 +95,7 @@ public final class App {
                             e.printStackTrace();
                         }
                         try {
-                            File myObj = new File(args[8]);
+                            File myObj = new File(args[5]);
                             Scanner myReader = new Scanner(myObj);
                             while (myReader.hasNextLine()) {
                             mes = myReader.nextLine();
@@ -105,13 +105,13 @@ public final class App {
                             System.out.println("An error occurred.");
                             e.printStackTrace();
                         }
-                        Signature sig = Signature.getInstance("SHA256withRSA");
+                        Signature sig = Signature.getInstance("SHA256with" + args[1]);
                         
-                        sig.initSign((PrivateKey) loadPrivateKey(privKeyString));
-                        System.out.println(loadPrivateKey(privKeyString));
+                        sig.initSign((PrivateKey) loadPrivateKey(privKeyString, args[1]));
+                        // System.out.println(loadPrivateKey(privKeyString));
                         sig.update(mes.getBytes());
                         byte [] signature = sig.sign();
-                        FileWriter writer = new FileWriter(args[10]);
+                        FileWriter writer = new FileWriter(args[7]);
                         writer.write(Base64.getEncoder().encodeToString(signature));
                         writer.close();
                       
@@ -141,16 +141,16 @@ public final class App {
 
 
             }
-            else if (args[5].equalsIgnoreCase("-pub")){
-                if (args[7].equalsIgnoreCase("-v")){
-                    if (args[9].equalsIgnoreCase("-i")){
+            else if (args[2].equalsIgnoreCase("-pub")){
+                if (args[4].equalsIgnoreCase("-v")){
+                    if (args[6].equalsIgnoreCase("-i")){
                         // convert string to signature
                         String pubKeyString = new String();
                         String mes = new String();
                         String signature = new String();
                        
                         try {
-                            File myObj = new File(args[6]);
+                            File myObj = new File(args[3]);
                             Scanner myReader = new Scanner(myObj);
                             while (myReader.hasNextLine()) {
                             pubKeyString = myReader.nextLine();
@@ -162,7 +162,7 @@ public final class App {
                         }
                         
                         try {
-                            File myObj = new File(args[8]);
+                            File myObj = new File(args[5]);
                             Scanner myReader = new Scanner(myObj);
                             while (myReader.hasNextLine()) {
                             signature = myReader.nextLine();
@@ -173,7 +173,7 @@ public final class App {
                             e.printStackTrace();
                         }
                         try {
-                            File myObj = new File(args[10]);
+                            File myObj = new File(args[7]);
                             Scanner myReader = new Scanner(myObj);
                             while (myReader.hasNextLine()) {
                             mes = myReader.nextLine();
@@ -183,8 +183,8 @@ public final class App {
                             System.out.println("An error occurred.");
                             e.printStackTrace();
                         }
-                        Signature sig = Signature.getInstance("SHA256withRSA");
-                        sig.initVerify((PublicKey) loadPublicKey(pubKeyString));
+                        Signature sig = Signature.getInstance("SHA256with"+args[1]);
+                        sig.initVerify((PublicKey) loadPublicKey(pubKeyString, args[1]));
                         // System.out.println((PublicKey) loadPublicKey(pubKeyString));
                         sig.update(mes.getBytes());
                         
@@ -224,7 +224,7 @@ public final class App {
         // writer.close();
     }
 
-    public static Key loadPrivateKey(String stored) throws GeneralSecurityException, IOException {
+    public static Key loadPrivateKey(String stored, String type) throws GeneralSecurityException, IOException {
         // java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         // Security.addProvider(new BouncyCastleProvider());
         
@@ -234,13 +234,13 @@ public final class App {
         // return  fact.generatePrivate(spec);
         
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(data);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        RSAPrivateKey privKey = (RSAPrivateKey) kf.generatePrivate(spec);
+        KeyFactory kf = KeyFactory.getInstance(type);
+        PrivateKey privKey = (PrivateKey) kf.generatePrivate(spec);
         return privKey;
         
      }
 
-     public static Key loadPublicKey(String stored) throws GeneralSecurityException, IOException {
+     public static Key loadPublicKey(String stored, String type) throws GeneralSecurityException, IOException {
         // java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         // Security.addProvider(new BouncyCastleProvider());
         
@@ -250,8 +250,8 @@ public final class App {
         // return  fact.generatePrivate(spec);
         
         X509EncodedKeySpec spec1 = new X509EncodedKeySpec(data);
-        KeyFactory kf1 = KeyFactory.getInstance("RSA");
-        RSAPublicKey pubKey = (RSAPublicKey) kf1.generatePublic(spec1);
+        KeyFactory kf1 = KeyFactory.getInstance(type);
+        PublicKey pubKey = (PublicKey) kf1.generatePublic(spec1);
         return pubKey;
         
      }
