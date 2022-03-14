@@ -9,6 +9,8 @@ import com.example.FactoryPattern.FactoryPatternDemo;
 import com.example.BuilderPattern.BuilderPatternDemo;
 import com.example.CompositePattern.CompositePatternDemo;
 import com.example.FilterPattern.CriteriaPatternDemo;
+import com.example.FacadePattern.FacadePatternDemo;
+import com.example.FlyweightPattern.FlyweightPatternDemo;
 
 /**
  * Hello world!
@@ -61,6 +63,14 @@ public final class App {
         if (input.equalsIgnoreCase("Filter Pattern")) {
             CriteriaPatternDemo criteriaPatternDemo = new CriteriaPatternDemo();
             criteriaPatternDemo.run();
+        }
+        if (input.equalsIgnoreCase("Facade Pattern")){
+            FacadePatternDemo facadePatternDemo = new FacadePatternDemo();
+            facadePatternDemo.run();
+        }
+        if (input.equalsIgnoreCase("Flyweight Pattern")){
+            FlyweightPatternDemo flyweightPatternDemo = new FlyweightPatternDemo();
+            flyweightPatternDemo.run();
         }
 
 

@@ -1,23 +1,24 @@
 package com.example;
-import java.io.BufferedReader;
+// import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
+// import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+// import java.nio.charset.StandardCharsets;
+// import java.nio.file.Files;
+// import java.nio.file.Paths;
 import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
+// import java.util.Arrays;
 import java.util.Base64;
 import java.util.Scanner;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 
 /**
  * Hello world!
@@ -44,9 +45,9 @@ public final class App {
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance(args[4]);
             if (args[5].equalsIgnoreCase("-p")){
                 keyGen.initialize(Integer.parseInt(args[6]));
-                PublicKey publicKey = keyGen.genKeyPair().getPublic();
-                // System.out.println("Public key: " + publicKey);
-                PrivateKey privateKey = keyGen.genKeyPair().getPrivate();
+                KeyPair keyPair = keyGen.generateKeyPair();
+                PublicKey publicKey = keyPair.getPublic();
+                PrivateKey privateKey = keyPair.getPrivate();
                 System.out.println("Private key: " + privateKey);
                 String priKeyString = Base64.getEncoder().encodeToString(privateKey.getEncoded());
                 String pubKeyString = Base64.getEncoder().encodeToString(publicKey.getEncoded());
@@ -147,6 +148,7 @@ public final class App {
                         String pubKeyString = new String();
                         String mes = new String();
                         String signature = new String();
+                       
                         try {
                             File myObj = new File(args[6]);
                             Scanner myReader = new Scanner(myObj);
@@ -158,6 +160,7 @@ public final class App {
                             System.out.println("An error occurred.");
                             e.printStackTrace();
                         }
+                        
                         try {
                             File myObj = new File(args[8]);
                             Scanner myReader = new Scanner(myObj);
@@ -186,7 +189,11 @@ public final class App {
                         sig.update(mes.getBytes());
                         
                         boolean verifies = sig.verify(Base64.getDecoder().decode(signature.getBytes()));
-                        System.out.println(verifies);
+                        if(verifies) {
+                            System.out.println("Signature verified");   
+                         } else {
+                            System.out.println("Signature failed");
+                         }
                         // System.out.println(mes);
 
                     }
