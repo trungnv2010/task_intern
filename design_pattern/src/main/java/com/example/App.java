@@ -11,6 +11,7 @@ import com.example.CompositePattern.CompositePatternDemo;
 import com.example.FilterPattern.CriteriaPatternDemo;
 import com.example.FacadePattern.FacadePatternDemo;
 import com.example.FlyweightPattern.FlyweightPatternDemo;
+import com.example.ProxyPattern.ProxyPatternDemo;
 
 /**
  * Hello world!
@@ -71,6 +72,10 @@ public final class App {
         if (input.equalsIgnoreCase("Flyweight Pattern")){
             FlyweightPatternDemo flyweightPatternDemo = new FlyweightPatternDemo();
             flyweightPatternDemo.run();
+        }
+        if (input.equalsIgnoreCase("Proxy Pattern")){
+            ProxyPatternDemo proxyPatternDemo = new ProxyPatternDemo();
+            proxyPatternDemo.run();
         }
 
 

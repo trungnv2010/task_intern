@@ -1,0 +1,4 @@
+# Created at 2022-03-15T08:55:23.013
+Boot Manifest-JAR contains absolute paths in classpath 'g:\Groo International\task_intern\task3v1_0\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+
