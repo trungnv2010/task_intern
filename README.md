@@ -9,3 +9,6 @@
 - hoan thanh not SparkJava 
 # week 3: 
 - tim hieu ve Adapter Pattern, Composite Pattern, Decorator Pattern
+# week 4: 
+- tim hieu ve Chain of Responsibility Pattern, Facade Pattern, Flyweight Pattern, Proxy Pattern
+- Hoan thanh task 3
