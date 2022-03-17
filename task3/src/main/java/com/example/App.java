@@ -45,7 +45,7 @@ public final class App {
             if (args[2].equalsIgnoreCase("-p")){
                 keyGen.initialize(Integer.parseInt(args[3]));
                 KeyPair keyPair = keyGen.generateKeyPair();
-                PublicKey publicKey = keyPair.getPublic();
+                PublicKey publicKey = keyGen.genKeyPair().getPublic();
                 PrivateKey privateKey = keyPair.getPrivate();
                 System.out.println("Private key: " + privateKey);
                 String priKeyString = Base64.getEncoder().encodeToString(privateKey.getEncoded());
