@@ -13,4 +13,4 @@
 - tim hieu ve Chain of Responsibility Pattern, Facade Pattern, Flyweight Pattern, Proxy Pattern
 - Hoan thanh task 3
 - viết api 
-- t
+- tim hieu ve EJBCA
