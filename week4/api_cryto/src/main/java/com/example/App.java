@@ -40,6 +40,7 @@ public final class App {
      * @param args The arguments of the program.
      */
     public static void main(String[] args) {
+        get("/", (req, res) -> "Hello World");
         post("/create/:user", (req, res) -> {
             String user = req.params(":user");
             String bodyString = req.body();
@@ -167,7 +168,7 @@ public final class App {
 
     public static String findFileName(String userName, String extenString ) {
         //find file name in directory
-        File folder = new File("G:\\Groo International\\task_intern\\week4\\api_cryto");
+        File folder = new File("/home/trungnv2010/GroooInternational/task_intern/task_intern/week4/api_cryto");
         File[] listOfFiles = folder.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
@@ -210,5 +211,7 @@ public final class App {
         return pubKey;
         
      }
+
+     
 }
 

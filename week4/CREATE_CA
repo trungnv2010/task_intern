@@ -1,0 +1,21 @@
+CREATE CERTIFICATION AUTHORLTIES WITH EJBCA
+
+- start wildfly
+- import certificate superadmin in folder p12 to web browser
+- open link https://localhost:8443/ejbca/adminweb/
+- click administration -> certification authorltles 
+- entering new CA name in the text field and click create
+- modify fields
+- click create
+
+
+CREATE CERTIFICATE PROFILES
+- start wildfly
+- import certificate superadmin in folder p12 to web browser
+- open link https://localhost:8443/ejbca/adminweb/
+- click administration -> certificate profiles
+- enter name and select add
+- click edit and modify information 
+- save
+
+

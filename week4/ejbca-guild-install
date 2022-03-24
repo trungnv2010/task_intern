@@ -1,0 +1,143 @@
+EJBCA INSTALLATION
+
+* Installation Prerequisites
+- Java: OpenJDK8: Recommend (Note that EJBCA currently does not support Java 11. If running on a platform that comes with Java 11 by default, such as Ubuntu 18.04, switch to using Java 8 by running the following: $ sudo update-java-alternatives --set java-1.8.0-openjdk-amd64)
+
+- Application Server: Wildfly 14
+- Databases: Mariadb
+- Build Tool: Apache Ant 1.8
+- EJBCA: 7.4.3
+
+* Configurations:
+- Config EJBCA:
+cd /ejbca_home/conf/
+
+ => create file database.properties 
+database.name=mysql
+database.url=jdbc:mysql://127.0.0.1:3306/ejbca?characterEncoding=UTF-8
+database.driver=org.mariadb.jdbc.Driver
+database.username=ejbca
+database.password=1qaz@wsx
+
+=> Create file ejbca.properties
+appserver.home=/home/trungnv2010/wildfly-14.0.1.Final
+
+- Create database and user: 
+mysql> CREATE DATABASE ejbca CHARACTER SET utf8 COLLATE utf8_general_ci;
+mysql> GRANT ALL PRIVILEGES ON ejbca.* TO 'ejbca'@'localhost' IDENTIFIED BY '1qaz@wsx';
+mysql> FLUSH PRIVILEGES;
+
+- Config Wildfly: 
+=> add database driver: 
+	download mariadb-java-client-2.2.6.jar
+	copy to folder: /wildfly_home/standalone/deployments/
+=> Increase Allowed Memory Usage:
+	Modify wildfly_home\bin\standalone.conf line 53:
+		JAVA_OPTS="-Xms2048m -Xmx2048m -XX:MetaspaceSize=192M -XX:MaxMetaspaceSize=256m -Djava.net.preferIPv4Stack=true"
+=> add datasource: 
+	run wildfly: 
+		./wildfly_home/bin/standalone.sh
+	run jboss - cli: 
+		./wildfly_home/bin/jboss-cli.sh -c
+		data-source add --name=ejbcads --driver-name="mariadb-java-client.jar" --connection-url="jdbc:mysql://127.0.0.1:3306/ejbca" --jndi-name="java:/EjbcaDS" --use-ccm=true --driver-class="org.mariadb.jdbc.Driver" --user-name="ejbca" --password="1qaz@wsx" --validate-on-match=true --background-validation=false --prepared-statements-cache-size=50 --share-prepared-statements=true --min-pool-size=5 --max-pool-size=150 --pool-prefill=true --transaction-isolation=TRANSACTION_READ_COMMITTED --check-valid-connection-sql="select 1;"
+		:reload
+=> Configure WildFly Remoting:
+	/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=connector-ref,value=remoting)
+	/socket-binding-group=standard-sockets/socket-binding=remoting:add(port=4447,interface=management)
+	/subsystem=undertow/server=default-server/http-listener=remoting:add(socket-binding=remoting,enable-http2=true)
+	/subsystem=infinispan/cache-container=ejb:remove()
+	/subsystem=infinispan/cache-container=server:remove()
+	/subsystem=infinispan/cache-container=web:remove()
+	/subsystem=ejb3/cache=distributable:remove()
+	/subsystem=ejb3/passivation-store=infinispan:remove()
+	:reload
+=> Configure Logging:
+	/subsystem=logging/logger=org.ejbca:add(level=INFO)
+	/subsystem=logging/logger=org.cesecore:add(level=INFO)
+=> Remove Existing TLS and HTTP Configuration:
+	/subsystem=undertow/server=default-server/http-listener=default:remove()
+	/subsystem=undertow/server=default-server/https-listener=https:remove()
+	/socket-binding-group=standard-sockets/socket-binding=http:remove()
+	/socket-binding-group=standard-sockets/socket-binding=https:remove()
+	:reload
+=> Add New Interfaces and Sockets:
+	/interface=http:add(inet-address="0.0.0.0")
+	/interface=httpspub:add(inet-address="0.0.0.0")
+	/interface=httpspriv:add(inet-address="0.0.0.0")
+	/socket-binding-group=standard-sockets/socket-binding=http:add(port="8080",interface="http")
+	/socket-binding-group=standard-sockets/socket-binding=httpspub:add(port="8442",interface="httpspub")
+	/socket-binding-group=standard-sockets/socket-binding=httpspriv:add(port="8443",interface="httpspriv")
+=> Configure TLS: 
+	/subsystem=elytron/key-store=httpsKS:add(path="keystore/keystore.jks",relative-to=jboss.server.config.dir,credential-reference={clear-text="serverpwd"},type=JKS)
+	/subsystem=elytron/key-store=httpsTS:add(path="keystore/truststore.jks",relative-to=jboss.server.config.dir,credential-reference={clear-text="changeit"},type=JKS)
+	/subsystem=elytron/key-manager=httpsKM:add(key-store=httpsKS,algorithm="SunX509",credential-reference={clear-text="serverpwd"})
+	/subsystem=elytron/trust-manager=httpsTM:add(key-store=httpsTS)
+	/subsystem=elytron/server-ssl-context=httpspub:add(key-manager=httpsKM,protocols=["TLSv1.2"])
+	/subsystem=elytron/server-ssl-context=httpspriv:add(key-manager=httpsKM,protocols=["TLSv1.2"],trust-manager=httpsTM,need-client-auth=true,authentication-optional=false,want-client-auth=true)
+=> Add HTTP(S) Listeners
+	/subsystem=undertow/server=default-server/http-listener=http:add(socket-binding="http", redirect-socket="httpspriv")
+	/subsystem=undertow/server=default-server/https-listener=httpspub:add(socket-binding="httpspub", ssl-context="httpspub", max-parameters=2048)
+	/subsystem=undertow/server=default-server/https-listener=httpspriv:add(socket-binding="httpspriv", ssl-context="httpspriv", max-parameters=2048)
+	:reload
+=> HTTP Protocol Behavior Configuration
+	/system-property=org.apache.catalina.connector.URI_ENCODING:add(value="UTF-8")
+	/system-property=org.apache.catalina.connector.USE_BODY_ENCODING_FOR_QUERY_STRING:add(value=true)
+	/system-property=org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH:add(value=true)
+	/system-property=org.apache.tomcat.util.http.Parameters.MAX_COUNT:add(value=2048)
+	/system-property=org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH:add(value=true)
+	/subsystem=webservices:write-attribute(name=wsdl-host, value=jbossws.undefined.host)
+	/subsystem=webservices:write-attribute(name=modify-wsdl-address, value=true)
+	:reload
+=> Remove RESTEasy-Crypto
+	cd /wildfly
+	$ sed -i 's|.*org.jboss.resteasy.resteasy-crypto.*||' modules/system/layers/base/org/jboss/as/jaxrs/main/module.xml
+	$ rm -rf modules/system/layers/base/org/jboss/resteasy/resteasy-crypto
+=> Remove Welcome Content
+	/subsystem=undertow/server=default-server/host=default-host/location="\/":remove()
+	/subsystem=undertow/configuration=handler/file=welcome-content:remove()
+	:reload
+=> Redirect to Application for Unknown URLs
+	/subsystem=undertow/configuration=filter/rewrite=redirect-to-app:add(redirect=true,target="/ejbca/")
+	/subsystem=undertow/server=default-server/host=default-host/filter-ref=redirect-to-app:add(predicate="method(GET) and not path-prefix('/ejbca/','/crls','/certificates','/.well-known/') and not equals({%{LOCAL_PORT}, 4447})")
+	:reload
+=> URL Rewriting for the CRL Servlet
+	/subsystem=undertow/configuration=filter/rewrite=crl-rewrite:add(target="/ejbca/publicweb/crls/$${1}")
+	/subsystem=undertow/server=default-server/host=default-host/filter-ref=crl-rewrite:add(predicate="method(GET) and regex('/crls/(.*)')")
+	:reload
+=> Remove Unneeded Subsystems and Extensions
+	/subsystem=jdr:remove()
+	/subsystem=sar:remove()
+	/subsystem=jmx:remove()
+	/subsystem=pojo:remove()
+	/subsystem=ee-security:remove()
+	/subsystem=microprofile-config-smallrye:remove()
+	/subsystem=microprofile-health-smallrye:remove()
+	/subsystem=microprofile-opentracing-smallrye:remove()
+	/extension=org.jboss.as.jdr:remove()
+	/extension=org.jboss.as.jmx:remove()
+	/extension=org.jboss.as.sar:remove()
+	/extension=org.jboss.as.pojo:remove()
+	/extension=org.wildfly.extension.ee-security:remove()
+	/extension=org.wildfly.extension.microprofile.config-smallrye:remove()
+	/extension=org.wildfly.extension.microprofile.health-smallrye:remove()
+	/extension=org.wildfly.extension.microprofile.opentracing-smallrye:remove()
+	:reload
+=> Enable AJP Connector
+	/subsystem=undertow/server=default-server/ajp-listener=ajp-listener:add(socket-binding=ajp, scheme=https, enabled=true)
+=> Add Support for Sending Email
+	/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding=ejbca-mail-smtp:add(port="993", host="my.mail.server")
+	/subsystem=mail/mail-session="java:/EjbcaMail":add(jndi-name=java:/EjbcaMail, from=noreply@mymail)
+	/subsystem=mail/mail-session="java:/EjbcaMail"/server=smtp:add(outbound-socket-binding-ref=ejbca-mail-smtp, tls=true, username=smtpuser, password=smtppassword)
+	:reload
+=> Only Hot Deploy at Startup
+	/subsystem=deployment-scanner/scanner=default:write-attribute(name=scan-interval,value=0)
+=> Disable Management Web Console
+	/core-service=management/management-interface=http-interface:write-attribute(name=console-enabled,value=false)
+	:reload
+	
+- Install EJBCA: 
+cd /ejbca_home/
+ant -q clean deployear
+$ ant runinstall
+$ ant deploy-keystore
+$ ant -Dca.name="My CA Name" javatruststore
